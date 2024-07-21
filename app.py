@@ -1,6 +1,7 @@
 import data
 import telebot
 import first_and_last_adresses
+import transform_mask
 from telebot import types
 bot = telebot.TeleBot(data.TOKEN)
 
@@ -40,6 +41,14 @@ def receive_comands(message):
 def receive_comands(message):
     user._cmd_status = 'frst_and_lst'
     bot.send_message(message.chat.id, user._cmd_status)
+@bot.message_handler(commands=['from_nn_to_abcd'])
+def receive_comands(message):
+    user._cmd_status = 'from_nn_to_abcd'
+    bot.send_message(message.chat.id, user._cmd_status)
+@bot.message_handler(commands=['from_abcd_to_nn'])
+def receive_comands(message):
+    user._cmd_status = 'from_abcd_to_nn'
+    bot.send_message(message.chat.id, user._cmd_status)
 @bot.message_handler(content_types=['text'])
 def get_text(message):
     if user._cmd_status == 'frst_and_lst':
@@ -49,5 +58,11 @@ def get_text(message):
         result = " ".join(["Минимальный адресс равен", min,",а максимальный", max])
         bot.send_message(message.chat.id, result)
         user._cmd_status = None
-
+    if user._cmd_status == 'from_abcd_to_nn' or user._cmd_status == 'from_nn_to_abcd':
+        submaskold = message.text
+        if user._cmd_status == 'from_abcd_to_nn':
+            newmask = transform_mask.convert_subnet_mask_to_cidr(submaskold)
+        else:
+            newmask = transform_mask.convert_cidr_to_subnet_mask(submaskold)
+        bot.send_message(message.chat.id, " ".join(["Новая маска",newmask]))
 bot.polling()
