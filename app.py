@@ -3,6 +3,7 @@ import telebot
 import first_and_last_adresses
 import transform_mask
 from telebot import types
+from is_right_ip import bitwise_multiply_ip_and_mask
 bot = telebot.TeleBot(data.TOKEN)
 
 class User:
@@ -49,6 +50,10 @@ def receive_comands(message):
 def receive_comands(message):
     user._cmd_status = 'from_abcd_to_nn'
     bot.send_message(message.chat.id, user._cmd_status)
+@bot.message_handler(commands=['calculate_adress'])
+def receive_comands(message):
+    user._cmd_status = 'calculate_adress'
+    bot.send_message(message.chat.id, user._cmd_status)
 @bot.message_handler(content_types=['text'])
 def get_text(message):
     if user._cmd_status == 'frst_and_lst':
@@ -65,4 +70,11 @@ def get_text(message):
         else:
             newmask = transform_mask.convert_cidr_to_subnet_mask(submaskold)
         bot.send_message(message.chat.id, " ".join(["Новая маска",newmask]))
+        user._cmd_status = None
+    if user._cmd_status == 'calculate_adress':
+        ip = message.text.split(" ")[0]
+        mks = message.text.split(" ")[1]
+        res = bitwise_multiply_ip_and_mask(ip,mks)
+        bot.send_message(message.chat.id, res)
+        user._cmd_status = None
 bot.polling()
