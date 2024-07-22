@@ -4,6 +4,7 @@ import first_and_last_adresses
 import transform_mask
 from telebot import types
 from is_right_ip import bitwise_multiply_ip_and_mask
+import random
 bot = telebot.TeleBot(data.TOKEN)
 
 class User:
@@ -12,6 +13,7 @@ class User:
         self.id = id
         self.name = name
         self.status = 'alive'
+        self.task = ''
     def cmd_handler(self, cmd: str):
         if cmd[:5] == 'start':
             self.status = 'alive'
@@ -54,6 +56,12 @@ def receive_comands(message):
 def receive_comands(message):
     user._cmd_status = 'calculate_adress'
     bot.send_message(message.chat.id, user._cmd_status)
+@bot.message_handler(commands=['calculate_mask'])
+def receive_comands(message):
+    user._cmd_status = 'calculate_mask'
+    random_num = random.randint(0, 32)
+    bot.send_message(message.chat.id, "".join(["Вычислите маску /", str(random_num)]))
+    user.task = "".join(["/",str(random_num)])
 @bot.message_handler(content_types=['text'])
 def get_text(message):
     if user._cmd_status == 'frst_and_lst':
@@ -77,4 +85,18 @@ def get_text(message):
         res = bitwise_multiply_ip_and_mask(ip,mks)
         bot.send_message(message.chat.id, res)
         user._cmd_status = None
+    if user._cmd_status == 'calculate_mask':
+        mask = user.task
+        # bot.send_message(message.chat.id, mask)
+        res = transform_mask.convert_cidr_to_subnet_mask(mask)
+        user_msk = message.text
+        if user_msk == data.masks[int(mask.split("/")[1])]:
+            # bot.send_message(message.chat.id, data.masks[int(mask.split("/")[1])])
+            # bot.send_message(message.chat.id, res)
+            bot.send_message(message.chat.id, 'Правильно')
+        else:
+            bot.send_message(message.chat.id, 'Неправильно')
+        # bot.send_message(message.chat.id, res)
+        user._cmd_status = None
+        user.task = ''
 bot.polling()
